@@ -23,6 +23,13 @@ app.use(express.urlencoded({ extended: true }));
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
+ * Sunucu uyandırma endpoint'i
+ */
+app.get('/', (req, res) => {
+  res.send("Server awake - Fen Bilimleri Quiz API");
+});
+
+/**
  * Soru üretimi için Gemini API'ye gönderilecek prompt
  * @param {string} grade - Sınıf seviyesi
  * @param {string} unit - Ünite adı
@@ -78,7 +85,9 @@ app.post('/generate-questions', async (req, res) => {
     console.log(`🤖 AI Soru İsteği: ${grade} - ${unit} - ${topic} (${questionCount} soru)`);
 
     // Gemini modelini başlat
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({
+      model: "models/gemini-1.5-flash"
+    });
 
     // Prompt'u oluştur
     const prompt = generatePrompt(grade, unit, topic, questionCount);
@@ -133,6 +142,7 @@ app.post('/generate-questions', async (req, res) => {
       }));
 
       console.log(`✅ ${finalQuestions.length} soru başarıyla üretildi`);
+      console.log('Questions generated successfully');
 
       return res.json({
         success: true,
