@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fen Bilimleri Akademisi - AI Destekli Quiz</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --primary: #06d6a0;
+      --primary-2: #06a17c;
+      --secondary: #1a4b8c;
+      --accent: #ffc107;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f5f7fb;
+      --muted: #9da8b6;
+      --background: #0f172a;
+      --surface: #1e293b;
+      --border: rgba(255, 255, 255, 0.1);
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      --border-radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 2rem 1rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sound-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 0.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+    }
+
+    .sound-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .panel {
+      background: var(--surface);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin: 2rem 0;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      background: var(--primary);
+      color: white;
+      padding: 1.5rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .panel-content {
+      padding: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--background);
+      color: var(--text);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(6, 214, 160, 0.1);
+    }
+
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-2);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(6, 214, 160, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+      max-width: 300px;
+      word-wrap: break-word;
+    }
+
+    .notification.success {
+      background: var(--success);
+    }
+
+    .notification.error {
+      background: var(--danger);
+    }
+
+    .notification.info {
+      background: var(--primary);
+    }
+
+    .notification.warning {
+      background: var(--warning);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .quiz-container {
+      background: var(--surface);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .quiz-info {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .question-count {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .score {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .timer {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--warning);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .timer.warning {
+      color: var(--danger);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .question-container {
+      margin-bottom: 2rem;
+    }
+
+    .question-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .ai-badge {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+
+    .options-container {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .option {
+      background: var(--background);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .option:hover {
+      border-color: var(--primary);
+      transform: translateX(5px);
+    }
+
+    .option.selected {
+      border-color: var(--primary);
+      background: rgba(6, 214, 160, 0.1);
+    }
+
+    .option.correct {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .option.wrong {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .option-letter {
+      background: var(--primary);
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .option-text {
+      flex: 1;
+    }
+
+    .quiz-navigation {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .explanation {
+      background: rgba(6, 214, 160, 0.1);
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+      color: var(--text);
+    }
+
+    .result-container {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .result-title {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .result-score {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .result-message {
+      font-size: 1.2rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .unit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .unit-card {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .unit-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .unit-card h3 {
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    .concept-list {
+      list-style: none;
+    }
+
+    .concept-list li {
+      padding: 0.5rem 0;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .concept-list li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <button class="sound-toggle" id="sound-toggle" title="Sesi aç/kapat">🔊</button>
+      <h1>🤖 Fen Bilimleri Akademisi - AI Destekli Quiz</h1>
+      <p>Yapay zeka ile kişiselleştirilmiş Fen Bilimleri soruları</p>
+    </header>
+
+    <div class="container">
+      <!-- Seçim Paneli -->
+      <div class="panel" id="selection-panel">
+        <div class="panel-header">
+          🎯 Quiz Ayarları
+        </div>
+        <div class="panel-content">
+          <div class="form-group">
+            <label for="grade-select">📚 Sınıf Seçiniz</label>
+            <select id="grade-select">
+              <option value="">Sınıf seçiniz...</option>
+              <option value="5. Sınıf">5. Sınıf</option>
+              <option value="6. Sınıf">6. Sınıf</option>
+              <option value="7. Sınıf">7. Sınıf</option>
+              <option value="8. Sınıf">8. Sınıf</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="unit-select">📖 Ünite Seçiniz</label>
+            <select id="unit-select" disabled>
+              <option value="">Önce sınıf seçiniz...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="topic-select">🔍 Konu Seçiniz</label>
+            <select id="topic-select" disabled>
+              <option value="">Önce ünite seçiniz...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="question-count">📊 Soru Sayısı</label>
+            <select id="question-count">
+              <option value="3">3 Soru</option>
+              <option value="5" selected>5 Soru</option>
+              <option value="10">10 Soru</option>
+              <option value="15">15 Soru</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" id="start-quiz-btn" disabled>
+            <i class="fas fa-robot"></i>
+            AI Sorularını Üret ve Başla
+          </button>
+        </div>
+      </div>
+
+      <!-- Yüklenme Ekranı -->
+      <div class="panel hidden" id="loading-panel">
+        <div class="panel-content">
+          <div class="loading">
+            <div class="spinner"></div>
+            <h2>🤖 Yapay zeka soruları üretiliyor...</h2>
+            <p>Bu işlem 10-30 saniye sürebilir</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz Paneli -->
+      <div class="panel hidden" id="quiz-panel">
+        <div class="panel-content">
+          <div class="quiz-container">
+            <div class="quiz-header">
+              <div class="quiz-info">
+                <span class="question-count">Soru <span id="current-question">1</span> / <span id="total-questions">5</span></span>
+                <span class="score">Puan: <span id="score">0</span></span>
+              </div>
+              <div class="timer">
+                <i class="fas fa-clock"></i>
+                <span id="time-left">30</span>
+              </div>
+            </div>
+
+            <div class="question-container">
+              <div class="question-text">
+                <span id="question-text">Soru yükleniyor...</span>
+                <span class="ai-badge" id="ai-badge">🤖 AI</span>
+              </div>
+              <div class="options-container" id="options-container">
+                <!-- Seçenekler JavaScript ile doldurulacak -->
+              </div>
+            </div>
+
+            <div class="quiz-navigation">
+              <button class="btn btn-secondary" id="prev-btn" disabled>
+                <i class="fas fa-arrow-left"></i>
+                Önceki
+              </button>
+              <button class="btn btn-primary" id="next-btn" disabled>
+                Sonraki
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sonuç Paneli -->
+      <div class="panel hidden" id="result-panel">
+        <div class="panel-content">
+          <div class="result-container">
+            <div class="result-title">🎉 Quiz Tamamlandı!</div>
+            <div class="result-score" id="final-score">0</div>
+            <div class="result-message" id="result-message">Harika iş!</div>
+            <button class="btn btn-primary" id="restart-btn">
+              <i class="fas fa-redo"></i>
+              Yeni Quiz Başlat
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Backend API URL
+    const API_BASE_URL = 'https://fen-bilimleri-api.onrender.com';
+
+    // Uygulama durumu
+    const appState = {
+      grade: '',
+      unit: '',
+      topic: '',
+      questionCount: 5,
+      questions: [],
+      currentQuestionIndex: 0,
+      score: 0,
+      timeLeft: 30,
+      timer: null,
+      soundEnabled: true,
+      answered: false
+    };
+
+    // Müfredat verisi
+    const curriculum = {
+      "5. Sınıf": {
+        "Güneş, Dünya ve Ay": [
+          "Güneş'in yapısı ve özellikleri",
+          "Dünya'nın şekli ve hareketleri", 
+          "Ay'ın yapısı ve hareketleri",
+          "Ay'ın evreleri",
+          "Ay ve Güneş tutulmaları"
+        ],
+        "Canlılar Dünyası": [
+          "Canlı ve cansız varlıklar",
+          "Canlıların sınıflandırılması",
+          "Bitkiler",
+          "Hayvanlar", 
+          "Mantarlar ve mikroskobik canlılar"
+        ],
+        "Kuvvetin Ölçülmesi ve Sürtünme": [
+          "Kuvvetin tanımı",
+          "Kuvvetin yönü ve büyüklüğü",
+          "Kuvvetin cisimler üzerindeki etkileri",
+          "Sürtünme kuvveti",
+          "Sürtünmenin günlük hayattaki etkileri"
+        ],
+        "Madde ve Değişim": [
+          "Maddenin hâlleri",
+          "Hal değişimleri", 
+          "Maddenin ayırt edici özellikleri",
+          "Isı ve sıcaklık"
+        ],
+        "Işığın Yayılması": [
+          "Işığın doğrusal yayılması",
+          "Işığın yansıması",
+          "Işığın kırılması",
+          "Gölge oluşumu"
+        ],
+        "Elektrik Devreleri": [
+          "Elektrik devresi elemanları",
+          "Basit elektrik devresi",
+          "Anahtarın görevleri",
+          "Devre şemaları"
+        ]
+      },
+      "6. Sınıf": {
+        "Güneş Sistemi ve Tutulmalar": [
+          "Güneş sistemi",
+          "Gezegenler",
+          "Güneş ve Ay tutulmaları"
+        ],
+        "Vücudumuzdaki Sistemler": [
+          "Destek ve hareket sistemi",
+          "Solunum sistemi", 
+          "Dolaşım sistemi",
+          "Sindirim sistemi",
+          "Boşaltım sistemi"
+        ],
+        "Kuvvet ve Hareket": [
+          "Sürat",
+          "Sabit süratli hareket",
+          "Yol – zaman ilişkisi",
+          "Kuvvet ve hareket ilişkisi"
+        ],
+        "Madde ve Isı": [
+          "Maddenin tanecikli yapısı",
+          "Isı iletim yolları",
+          "Isı yalıtımı", 
+          "Yakıtlar ve enerji verimliliği"
+        ],
+        "Ses ve Özellikleri": [
+          "Sesin oluşumu",
+          "Sesin yayılması",
+          "Sesin yansıması",
+          "Sesin soğurulması",
+          "Ses kirliliği"
+        ],
+        "Elektriğin İletimi": [
+          "İletken ve yalıtkan maddeler",
+          "Elektrik enerjisinin iletimi",
+          "Elektriksel güvenlik"
+        ]
+      },
+      "7. Sınıf": {
+        "Güneş Sistemi ve Ötesi": [
+          "Uzay araştırmaları",
+          "Yıldızlar",
+          "Galaksiler",
+          "Uzay teknolojileri"
+        ],
+        "Hücre ve Bölünmeler": [
+          "Hücrenin yapısı",
+          "Hücre organelleri",
+          "Mitoz bölünme"
+        ],
+        "Kuvvet ve Enerji": [
+          "İş",
+          "Enerji türleri",
+          "Enerji dönüşümleri",
+          "Kinetik ve potansiyel enerji"
+        ],
+        "Saf Maddeler ve Karışımlar": [
+          "Saf maddeler",
+          "Elementler",
+          "Bileşikler",
+          "Karışımlar",
+          "Ayırma yöntemleri"
+        ],
+        "Işığın Madde ile Etkileşimi": [
+          "Soğurma",
+          "Yansıma",
+          "Kırılma",
+          "Mercekler"
+        ],
+        "Elektrik Devreleri": [
+          "Seri bağlı devreler",
+          "Paralel bağlı devreler",
+          "Ampul parlaklığı",
+          "Devre analizi"
+        ]
+      },
+      "8. Sınıf": {
+        "Mevsimler ve İklim": [
+          "Dünya'nın hareketleri",
+          "Mevsimlerin oluşumu",
+          "İklim ve hava olayları",
+          "Küresel iklim değişikliği"
+        ],
+        "DNA ve Genetik Kod": [
+          "DNA'nın yapısı",
+          "Gen",
+          "Kromozom", 
+          "Kalıtım",
+          "Mutasyon ve modifikasyon"
+        ],
+        "Basınç": [
+          "Katı basıncı",
+          "Sıvı basıncı",
+          "Gaz basıncı",
+          "Günlük hayatta basınç"
+        ],
+        "Madde ve Endüstri": [
+          "Asitler ve bazlar",
+          "pH ölçeği",
+          "Kimyasal tepkimeler",
+          "Endüstride kimya"
+        ],
+        "Basit Makineler": [
+          "Kaldıraçlar",
+          "Makaralar",
+          "Eğik düzlem",
+          "Çıkrık",
+          "Vida"
+        ],
+        "Enerji Dönüşümleri ve Çevre Bilimi": [
+          "Enerji kaynakları",
+          "Enerji dönüşümleri",
+          "Sürdürülebilirlik",
+          "Geri dönüşüm",
+          "Çevre kirliliği"
+        ]
+      }
+    };
+
+    // DOM elementleri
+    const elements = {
+      gradeSelect: document.getElementById('grade-select'),
+      unitSelect: document.getElementById('unit-select'),
+      topicSelect: document.getElementById('topic-select'),
+      questionCountSelect: document.getElementById('question-count'),
+      startQuizBtn: document.getElementById('start-quiz-btn'),
+      selectionPanel: document.getElementById('selection-panel'),
+      loadingPanel: document.getElementById('loading-panel'),
+      quizPanel: document.getElementById('quiz-panel'),
+      resultPanel: document.getElementById('result-panel'),
+      currentQuestionSpan: document.getElementById('current-question'),
+      totalQuestionsSpan: document.getElementById('total-questions'),
+      scoreSpan: document.getElementById('score'),
+      timeLeftSpan: document.getElementById('time-left'),
+      questionText: document.getElementById('question-text'),
+      optionsContainer: document.getElementById('options-container'),
+      aiBadge: document.getElementById('ai-badge'),
+      prevBtn: document.getElementById('prev-btn'),
+      nextBtn: document.getElementById('next-btn'),
+      finalScore: document.getElementById('final-score'),
+      resultMessage: document.getElementById('result-message'),
+      restartBtn: document.getElementById('restart-btn'),
+      soundToggle: document.getElementById('sound-toggle')
+    };
+
+    // Bildirim göster
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 3000);
+    }
+
+    // Ses efekti
+    function playSound(type) {
+      if (!appState.soundEnabled) return;
+      
+      // Basit ses efektleri (placeholder)
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      if (type === 'correct') {
+        oscillator.frequency.value = 800;
+        gainNode.gain.value = 0.1;
+      } else if (type === 'wrong') {
+        oscillator.frequency.value = 200;
+        gainNode.gain.value = 0.1;
+      }
+      
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.2);
+    }
+
+    // Panel değiştir
+    function showPanel(panelName) {
+      Object.values(elements).forEach(el => {
+        if (el && el.classList && el.classList.contains('panel')) {
+          el.classList.add('hidden');
+        }
+      });
+      
+      const panel = elements[`${panelName}Panel`];
+      if (panel) {
+        panel.classList.remove('hidden');
+      }
+    }
+
+    // Sınıf seçildiğinde üniteleri yükle
+    elements.gradeSelect.addEventListener('change', (e) => {
+      const grade = e.target.value;
+      appState.grade = grade;
+      
+      elements.unitSelect.innerHTML = '<option value="">Ünite seçiniz...</option>';
+      elements.topicSelect.innerHTML = '<option value="">Önce ünite seçiniz...</option>';
+      elements.topicSelect.disabled = true;
+      
+      if (grade && curriculum[grade]) {
+        elements.unitSelect.disabled = false;
+        Object.keys(curriculum[grade]).forEach(unit => {
+          const option = document.createElement('option');
+          option.value = unit;
+          option.textContent = unit;
+          elements.unitSelect.appendChild(option);
+        });
+      }
+      
+      updateStartButton();
+    });
+
+    // Ünite seçildiğinde konuları yükle
+    elements.unitSelect.addEventListener('change', (e) => {
+      const unit = e.target.value;
+      appState.unit = unit;
+      
+      elements.topicSelect.innerHTML = '<option value="">Konu seçiniz...</option>';
+      
+      if (unit && appState.grade && curriculum[appState.grade][unit]) {
+        elements.topicSelect.disabled = false;
+        curriculum[appState.grade][unit].forEach(topic => {
+          const option = document.createElement('option');
+          option.value = topic;
+          option.textContent = topic;
+          elements.topicSelect.appendChild(option);
+        });
+      }
+      
+      updateStartButton();
+    });
+
+    // Konu seçildiğinde
+    elements.topicSelect.addEventListener('change', (e) => {
+      appState.topic = e.target.value;
+      updateStartButton();
+    });
+
+    // Soru sayısı değiştiğinde
+    elements.questionCountSelect.addEventListener('change', (e) => {
+      appState.questionCount = parseInt(e.target.value);
+    });
+
+    // Başla butonu durumunu güncelle
+    function updateStartButton() {
+      const canStart = appState.grade && appState.unit && appState.topic;
+      elements.startQuizBtn.disabled = !canStart;
+    }
+
+    // AI sorularını getir
+    async function fetchAIQuestions() {
+      try {
+        // Backend bağlantı kontrolü
+        const response = await fetch(`${API_BASE_URL}/generate-questions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            grade: appState.grade,
+            unit: appState.unit,
+            topic: appState.topic,
+            questionCount: appState.questionCount
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Backend hatası: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          appState.questions = data.questions;
+          startQuiz();
+        } else {
+          throw new Error(data.error || 'Sorular alınamadı');
+        }
+      } catch (error) {
+        console.error('AI soru alma hatası:', error);
+        
+        // Backend'e bağlanamıyorsa özel mesaj
+        if (error.message.includes('Failed to fetch') || error.message.includes('Backend hatası')) {
+          showNotification('⚠️ Backend sunucusuna bağlanılamıyor. Lütfen backend\'i başlatın.', 'error');
+          showNotification('📝 Terminal: cd backend && npm start', 'info');
+        } else {
+          showNotification(error.message, 'error');
+        }
+        
+        showPanel('selection');
+      }
+    }
+
+    // Quiz'i başlat
+    function startQuiz() {
+      appState.currentQuestionIndex = 0;
+      appState.score = 0;
+      appState.answered = false;
+      
+      showPanel('quiz');
+      loadQuestion();
+      startTimer();
+      
+      showNotification(`${appState.questions.length} yapay zeka sorusu ile quiz başladı!`, 'success');
+    }
+
+    // Soruyu yükle
+    function loadQuestion() {
+      if (appState.currentQuestionIndex >= appState.questions.length) {
+        finishQuiz();
+        return;
+      }
+
+      const question = appState.questions[appState.currentQuestionIndex];
+      appState.answered = false;
+      
+      // Önceki açıklamaları temizle
+      elements.optionsContainer.innerHTML = '';
+      
+      elements.currentQuestionSpan.textContent = appState.currentQuestionIndex + 1;
+      elements.totalQuestionsSpan.textContent = appState.questions.length;
+      elements.scoreSpan.textContent = appState.score;
+      elements.questionText.textContent = question.question;
+      
+      // AI etiketi - backend'den gelmezse varsayılan true
+      const isAI = question.isAI !== undefined ? question.isAI : true;
+      if (isAI) {
+        elements.aiBadge.classList.remove('hidden');
+      } else {
+        elements.aiBadge.classList.add('hidden');
+      }
+      
+      // Seçenekleri oluştur
+      question.options.forEach((option, index) => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'option';
+        optionDiv.innerHTML = `
+          <div class="option-letter">${String.fromCharCode(65 + index)}</div>
+          <div class="option-text">${option}</div>
+        `;
+        optionDiv.addEventListener('click', () => selectOption(index));
+        elements.optionsContainer.appendChild(optionDiv);
+      });
+      
+      // Timer'ı resetle
+      clearInterval(appState.timer);
+      startTimer();
+      
+      // Navigasyon butonları
+      elements.prevBtn.disabled = appState.currentQuestionIndex === 0;
+      elements.nextBtn.disabled = true;
+    }
+
+    // Seçenek seç
+    function selectOption(index) {
+      if (appState.answered) return;
+      
+      appState.answered = true;
+      const question = appState.questions[appState.currentQuestionIndex];
+      
+      // Süre dolması durumu - index -1 ise sadece bildirim göster
+      if (index === -1) {
+        showNotification('⏰ Süre doldu! Doğru cevap yeşil ile gösterildi.', 'warning');
+        elements.nextBtn.disabled = false;
+        return;
+      }
+      
+      const isCorrect = index === question.answer;
+      
+      // Seçenekleri işaretle
+      const options = elements.optionsContainer.querySelectorAll('.option');
+      options.forEach((option, i) => {
+        option.classList.remove('selected', 'correct', 'wrong');
+        if (i === question.answer) {
+          option.classList.add('correct');
+        } else if (i === index && index >= 0) {
+          option.classList.add('wrong');
+        }
+        option.style.pointerEvents = 'none';
+      });
+      
+      // Skoru güncelle
+      if (isCorrect) {
+        appState.score += 10;
+        elements.scoreSpan.textContent = appState.score;
+        playSound('correct');
+        showNotification('✅ Doğru cevap!', 'success');
+        
+        // Konfetti
+        if (typeof confetti !== 'undefined') {
+          confetti({
+            particleCount: 50,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+      } else {
+        playSound('wrong');
+        showNotification(`❌ Yanlış cevap. Doğrusu: ${question.options[question.answer]}`, 'error');
+      }
+      
+      // Açıklama göster
+      setTimeout(() => {
+        const explanation = document.createElement('div');
+        explanation.className = 'explanation';
+        explanation.textContent = question.explanation;
+        elements.optionsContainer.appendChild(explanation);
+      }, 500);
+      
+      // Sonraki butonunu aktif et
+      elements.nextBtn.disabled = false;
+    }
+
+    // Timer
+    function startTimer() {
+      appState.timeLeft = 30;
+      updateTimerDisplay();
+      
+      appState.timer = setInterval(() => {
+        appState.timeLeft--;
+        updateTimerDisplay();
+        
+        if (appState.timeLeft <= 0) {
+          clearInterval(appState.timer);
+          if (!appState.answered) {
+            selectOption(-1); // Süre doldu
+          }
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      elements.timeLeftSpan.textContent = appState.timeLeft;
+      if (appState.timeLeft <= 10) {
+        elements.timeLeftSpan.parentElement.classList.add('warning');
+      } else {
+        elements.timeLeftSpan.parentElement.classList.remove('warning');
+      }
+    }
+
+    // Quiz'i bitir
+    function finishQuiz() {
+      clearInterval(appState.timer);
+      
+      const percentage = Math.round((appState.score / (appState.questions.length * 10)) * 100);
+      let message = '';
+      
+      if (percentage >= 90) {
+        message = '🏆 Mükemmel! Süper bir performans!';
+      } else if (percentage >= 70) {
+        message = '🌟 Çok iyi! Başarılı bir sonuç!';
+      } else if (percentage >= 50) {
+        message = '👍 İyi! Daha da gelişebilirsin!';
+      } else {
+        message = '📚 Tekrar çalışman gerekiyor. Pes etme!';
+      }
+      
+      elements.finalScore.textContent = `${appState.score} / ${appState.questions.length * 10}`;
+      elements.resultMessage.textContent = message;
+      showPanel('result');
+    }
+
+    // Event listener'lar
+    elements.startQuizBtn.addEventListener('click', () => {
+      showPanel('loading');
+      fetchAIQuestions();
+    });
+
+    elements.prevBtn.addEventListener('click', () => {
+      if (appState.currentQuestionIndex > 0) {
+        appState.currentQuestionIndex--;
+        loadQuestion();
+      }
+    });
+
+    elements.nextBtn.addEventListener('click', () => {
+      appState.currentQuestionIndex++;
+      loadQuestion();
+    });
+
+    elements.restartBtn.addEventListener('click', () => {
+      showPanel('selection');
+    });
+
+    elements.soundToggle.addEventListener('click', () => {
+      appState.soundEnabled = !appState.soundEnabled;
+      elements.soundToggle.textContent = appState.soundEnabled ? '🔊' : '🔇';
+      showNotification(appState.soundEnabled ? 'Sesler açıldı' : 'Sesler kapatıldı', 'info');
+    });
+
+    // Başlangıç
+    showPanel('selection');
+  </script>
+</body>
+</html>
